@@ -1,0 +1,25 @@
+#elements to be translated:
+
+YAF_SPLASH="GSM_v2 Menu update, please wait..." 	# GSM_v2 Menu update, please wait...
+QUIT="Close menu"									# Close menu
+SAVE="Save"											# Save
+LEFT="Left"											# Left
+RIGHT="Right"										# Right
+TOP="Top"											# Top
+BOTTOM="Bottom"										# Bottom
+TAB_ORIENT="Placement of tabs"						# Placement of tabs
+ISIZE="Ikon size"									# Icon size
+BG="Backgrounds"									# Backgrounds
+FC="Font color"										# Font color
+FCB="Black"											# Black
+FCW="White"											# White
+FAVORITE="Favorites"								# Favorites
+MENU_POS="Menu position"							# Menu position
+CENTER="Center"										# Center
+FSCREEN="Full screen"								# Full screen
+CUSTOM="Custom"										# Custom
+FROM_LEFT="From left"								# From left
+FROM_TOP="From top"									# From top
+AUTO_START="Auto start"								# Auto start
+EXTRA="EXTRA: You can make favorite tab in the menu, just drop some .desktop file to favorite folder in gsm_v2 base dir."
+# You can make favorite tab in the menu, just drop some .desktop file to favorite folder in gsm_v2 base dir.

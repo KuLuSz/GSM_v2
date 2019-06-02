@@ -1,0 +1,334 @@
+#!/bin/sh
+# Made by KuLuSz from previous gsm gui for puppy menus 
+# Added gsm_v2 menu settings tab for setting perfect design of user
+# Can set icon size, tab position, backround,font color theme of menu
+BASE_DIR=$(dirname $0 | sed 's/ /\\ /g' )
+LANGUIN="$(echo "$LANG" | cut -c1,2)"
+if [ -e $BASE_DIR/locale/$LANGUIN ];then
+ . "$BASE_DIR"/locale/$LANGUIN
+ else
+ . "$BASE_DIR"/locale/en
+fi
+
+SD="$BASE_DIR/settings"
+[ ! -d $SD ]&& mkdir -p $SD
+[ ! -d $BASE_DIR/gui ]&& mkdir -p $BASE_DIR/gui
+[ ! -d $BASE_DIR/favorite ]&& mkdir -p $BASE_DIR/favorite
+[ ! -e $SD/tab_position ]&& echo "0" > $SD/tab_position
+[ ! -e $SD/tab_position2 ]&& echo "$LEFT" > $SD/tab_position2
+[ ! -e $SD/icon_size ]&& echo "48" > $SD/icon_size
+[ ! -e $SD/dic ]&& echo "0" > $SD/dic
+[ ! -e $SD/font_color ]&& echo "$FCB" > $SD/font_color
+[ ! -e $SD/gtk_fc ]&& echo "gtkrc" > $SD/gtk_fc
+[ ! -e $SD/win_pos ]&&echo "CENTER|0|0" > $SD/win_pos
+TAB_POSITION=$(cat $SD/tab_position)
+TAB_POSITION2=$(cat $SD/tab_position2)
+ICON_SIZE=$(cat $SD/icon_size)
+DEKTOP_ITEMS_COUNT=$(cat $SD/dic)
+UPDATE=$(ls $SD | grep update)
+FDIC=$(cat $SD/fav_dic)
+FCOL=$(cat $SD/font_color)
+GTKRCFILE=$(cat $SD/gtk_fc)
+SYS_GTK_THEME=$(cat /root/.gtkrc-2.0 | grep include | grep '/gtkrc' | cut -f5 -d'/')
+SYSTHEME="export GTK2_RC_FILES=/usr/share/themes/$SYS_GTK_THEME/gtk-2.0/gtkrc"
+WIN_POS=$(cat $SD/win_pos | cut -f1 -d'|')
+LPOS=$(cat $SD/win_pos | cut -f2 -d'|')
+TPOS=$(cat $SD/win_pos | cut -f3 -d'|')
+FULL_SCREEN_SIZE=$(cat $SD/win_pos | cut -f4 -d'|')
+
+
+XDG_MENUS="/etc/xdg/menus/puppy-desktop.menu
+/etc/xdg/menus/puppy-system.menu
+/etc/xdg/menus/puppy-setup.menu
+/etc/xdg/menus/puppy-utility.menu
+/etc/xdg/menus/puppy-filesystem.menu
+/etc/xdg/menus/puppy-graphic.menu
+/etc/xdg/menus/puppy-document.menu
+/etc/xdg/menus/puppy-calculate.menu
+/etc/xdg/menus/puppy-personal.menu
+/etc/xdg/menus/puppy-network.menu
+/etc/xdg/menus/puppy-internet.menu
+/etc/xdg/menus/puppy-multimedia.menu
+/etc/xdg/menus/puppy-fun.menu"
+IMATRIX="$ICON_SIZE"
+[ -e /root/Startup/$(basename $0) ]&& AA=' active="true"' || AA=''
+
+if [ "$UPDATE" -o "$(ls /usr/share/applications | grep -c desktop)" != "$DEKTOP_ITEMS_COUNT" ];then
+ yaf-splash -close never -icon /usr/local/lib/X11/pixmaps/info.xpm -text "$YAF_SPLASH" &
+ PID0=$!
+ ls /usr/share/applications | grep -c desktop > $SD/dic
+ [ -e "$BASE_DIR"/gui/programs.gui ]&& rm $BASE_DIR/gui/programs.gui
+ [ -e "$SD"/update ]&& rm $SD/update
+CNT=0
+ICON_PATH="/usr/share/pixmaps/"
+for menus in `echo $XDG_MENUS`;do # menük listázása egyesével
+
+ CNT_REV=$(jwm-xdgmenu "$menus" | grep -c 'Program label') 
+ if [ "$CNT_REV" -lt "5" ];then # Ikonok elosztása
+  CNT_DEF=2
+ elif [ "$CNT_REV" -le "9" ];then
+  CNT_DEF=3
+ elif [ "$CNT_REV" -le "12" ];then
+  CNT_DEF=4
+ elif [ "$CNT_REV" -le "15" ];then
+  CNT_DEF=5
+ elif [ "$CNT_REV" -le "18" ];then
+  CNT_DEF=6
+ elif [ "$CNT_REV" -le "21" ];then
+  CNT_DEF=7
+ elif [ "$CNT_REV" -le "24" ];then
+  CNT_DEF=8
+ elif [ "$CNT_REV" -le "27" ];then
+  CNT_DEF=9
+ elif [ "$CNT_REV" -ge "30" -a "$CNT_REV" -lt "30" ];then
+  CNT_DEF=10
+  IMATRIX=24
+ fi
+ echo "  <vbox homogeneous=\"true\" spacing=\"$IMATRIX\">
+    <hbox homogeneous=\"true\">" >> "$BASE_DIR"/gui/programs.gui
+ jwm-xdgmenu "$menus" | grep 'Program label' | while read prog;do #Program elemek listázása
+  PNAME=$(echo "$prog" | awk -F'"' '{print $2}')               # program neve
+  PICON=$(echo "$prog" | awk -F'"' '{print $4}')               # program ikonja
+  PEXEC=$(echo "$prog" | cut -f2 -d'>' | cut -f1 -d'<')        # program parancsa
+
+  if [ ! "$(echo "$PICON" | grep 'png\|svg\|xpm\|jpg')" ];then # ikon kiterjesztés ellenörzés
+   PICON="$(find $ICON_PATH -name "*$PICON*")"
+  fi
+  if [ ! "$(echo "$PICON" | grep '/')" ];then
+   PICON=$ICON_PATH$PICON
+  fi
+  echo "     <button tooltip-text=\"$PNAME\">
+      <height>\"$IMATRIX\"</height>
+      <width>\"$IMATRIX\"</width>
+      <input file>$PICON</input>
+      <action>$SYSTHEME && $PEXEC &</action>
+     </button>"  >> "$BASE_DIR"/gui/programs.gui
+ CNT=$(expr $CNT + 1)
+ CNT_REV=$(expr $CNT_REV - 1)
+ if [ "$CNT" -eq "$CNT_DEF" -a "$CNT_REV" -ne "0" ];then
+  echo "    </hbox>
+    <hbox homogeneous=\"true\">" >> "$BASE_DIR"/gui/programs.gui
+  CNT=0
+ fi
+ done
+ echo "   </hbox>
+  </vbox>" >> $BASE_DIR/gui/programs.gui
+done
+kill -9 $PID0
+fi
+TABS=$(echo "$(for tabs in `echo "$XDG_MENUS"`;do jwm-xdgmenu "$tabs" | grep '<Menu label' | awk -F'"' '{print $2}' | tr "\n" "|";done)" | sed 's/.$//')
+PROGS=$(cat $BASE_DIR/gui/programs.gui)
+# Menü frissítés vége
+[ -e "$BASE_DIR"/gui/favorite.gui ]&& rm "$BASE_DIR"/gui/favorite.gui
+
+if [ "$(ls $BASE_DIR/favorite | grep '\.desktop$')" ];then
+ FAVTAB="$(echo "$FAVORITE|")"
+ CNT=0
+ CNT_REV=$(ls $BASE_DIR/favorite | grep -c '\.desktop$')
+ if [ "$CNT_REV" -lt "5" ];then # Ikonok elosztása
+  CNT_DEF=2
+ elif [ "$CNT_REV" -le "9" ];then
+  CNT_DEF=3
+ elif [ "$CNT_REV" -le "12" ];then
+  CNT_DEF=4
+ elif [ "$CNT_REV" -le "15" ];then
+  CNT_DEF=5
+ elif [ "$CNT_REV" -le "18" ];then
+  CNT_DEF=6
+ elif [ "$CNT_REV" -le "21" ];then
+  CNT_DEF=7
+ elif [ "$CNT_REV" -le "24" ];then
+  CNT_DEF=8
+ elif [ "$CNT_REV" -le "27" ];then
+  CNT_DEF=9
+ elif [ "$CNT_REV" -ge "30" -a "$CNT_REV" -lt "30" ];then
+  CNT_DEF=10
+  IMATRIX=24
+ fi 
+ echo "  <vbox homogeneous=\"true\" spacing=\"$IMATRIX\">
+   <hbox homogeneous=\"true\">" >> "$BASE_DIR"/gui/favorite.gui
+ for fav in `ls $BASE_DIR/favorite | grep '\.desktop$'`;do
+  fav="$BASE_DIR/favorite/$fav"
+  if [ "$(cat $fav | grep Name | cut -f1 -d'=' | grep $LANGUIN)" ];then
+   NAME="$(cat $fav | grep Name | grep $LANGUIN | cut -f2 -d'=')"
+  else
+   NAME="$(cat $fav | grep 'Name=' | grep -v Generic)"
+  fi
+  ICON="$(cat $fav | grep Icon | cut -f2 -d'=')"
+  if [ ! "$(echo "$ICON" | grep '/')" ];then
+   ICON="/usr/share/pixmaps/$ICON"
+  fi
+  EXEC="$(cat $fav | grep Exec | cut -f2 -d'=')"
+  echo "     <button tooltip-text=\"$NAME\">
+      <height>\"$IMATRIX\"</height>
+      <width>\"$IMATRIX\"</width>
+      <input file>$ICON</input>
+      <action>$SYSTHEME && $EXEC &</action>
+     </button>"  >> $BASE_DIR/gui/favorite.gui
+ CNT=$(expr $CNT + 1)
+ CNT_REV=$(expr $CNT_REV - 1)
+ if [ "$CNT" -eq "$CNT_DEF" -a "$CNT_REV" -ne "0" ];then
+  echo "   </hbox>
+   <hbox homogeneous=\"true\">" >> "$BASE_DIR"/gui/favorite.gui
+  CNT=0
+ fi
+ done
+ echo "   </hbox>
+  </vbox>" >> "$BASE_DIR"/gui/favorite.gui
+ FAV="$(cat "$BASE_DIR"/gui/favorite.gui)"
+else
+ FAVTAB=""
+ FAV=""
+fi
+
+[ -e "$BASE_DIR"/gui/bg_rbs.gui ]&& rm "$BASE_DIR"/gui/bg_rbs.gui
+for bg in $(ls $BASE_DIR/Theme/gtk-2.0/bg/);do
+ echo "       <button>
+        <height>24</height>
+        <width>24</width>
+        <input file>$BASE_DIR/Theme/gtk-2.0/bg/$bg</input>
+        <action>ln -sf $BASE_DIR/Theme/gtk-2.0/bg/$bg $BASE_DIR/Theme/gtk-2.0/tab2.png &</action>
+        <action>exit:$SAVE</action>
+       </button>" >> "$BASE_DIR"/gui/bg_rbs.gui
+done
+BG_RBS="$(cat "$BASE_DIR"/gui/bg_rbs.gui)"
+AT=' active="true"'
+A1=''
+A2=''
+A3=''
+FIXED_SIZE="923x500"
+FIXED_SIZE2="800x-1"
+if [ "$WIN_POS" == "CENTER" ];then
+ WINDOW_POSITION="--center --geometry $FIXED_SIZE"
+ A1=$AT
+ if [ "$TAB_POSITION" == "0" -o "$TAB_POSITION" == "1" ];then
+  WINDOW_POSITION="--center --geometry $FIXED_SIZE2"
+ fi
+elif [ "$WIN_POS" == "FULLSCREEN" ];then
+ WINDOW_POSITION="--geometry $FULL_SCREEN_SIZE+$LPOS+$TPOS"
+ HOMO=' homogeneous="true"'
+ A2=$AT
+elif [ "$WIN_POS" == "CUSTOM" ];then
+ WINDOW_POSITION="--geometry +$LPOS+$TPOS"
+ A3=$AT
+fi
+
+export gsm_v2='
+<vbox space-fill="true" space-expand="true" resizable="true">
+ <notebook labels="GSM_v2|'$FAVTAB''$TABS'" tab-pos="'$TAB_POSITION'" page="1">
+
+  <vbox homogeneous="true" tooltip-text="'$EXTRA'">
+   <hbox homogeneous="true"><text use-markup="true"><label>"<b>GTK Start Menu v2</b> - Created by <b>KuLuSz</b> (Hungary)"</label></text></hbox>
+
+     <hbox'$HOMO'>
+      <text><label> '$FC':</label></text> 
+      <combobox width-request="80"><variable>FONT</variable>
+       <item>'$FCOL'</item>
+       <item>'$FCB'</item>       
+       <item>'$FCW'</item>
+      </combobox> 
+     <text><label>'$TAB_ORIENT':</label></text>    
+      <combobox width-request="80">       <variable>TABO</variable>
+       <item>'$TAB_POSITION2'</item>
+       <item>'$LEFT'</item>       
+       <item>'$RIGHT'</item>
+       <item>'$TOP'</item>
+       <item>'$BOTTOM'</item>
+      </combobox>
+     <text><label>'$ISIZE':</label></text>    
+      <combobox width-request="50">       <variable>ICON</variable>
+       <item>'$ICON_SIZE'</item>
+       <item>48</item>       
+       <item>24</item>
+      </combobox>
+      <checkbox'$AA'>
+       <label>'$AUTO_START'</label>
+       <default>false</default>
+       <variable>AUTO</variable>
+      </checkbox>
+     </hbox>
+     <hbox'$HOMO'>
+      <text><label> '$BG':</label></text> 
+	  '$BG_RBS'
+	   <text width-request="1"><label>.</label></text>
+     </hbox>
+     <hbox'$HOMO'>
+       <text><label> '$MENU_POS':</label></text>
+       <radiobutton'$A1'>
+        <label>'$CENTER'</label>
+        <variable>CENTER</variable>
+       </radiobutton>
+       <radiobutton'$A2'>
+        <label>'$FSCREEN'</label>
+        <variable>FULLSCREEN</variable>
+       </radiobutton>
+       <radiobutton'$A3'>
+        <label>'$CUSTOM'</label>
+        <variable>CUSTOM</variable>
+        <action>if true enable:LEFT_POS</action>
+        <action>if true enable:TOP_POS</action>
+        <action>if false disable:LEFT_POS</action>
+        <action>if false disable:TOP_POS</action>       
+       </radiobutton>
+       <text><label>'$FROM_LEFT':</label></text>
+       <entry width-request="40" max-length="4" width="4" space-expand="false" space-fill="false">
+        <default>'$LPOS'</default>
+        <variable>LEFT_POS</variable>
+        <visible>disabled</visible>
+       </entry>       
+       <text><label>'$FROM_TOP':</label></text>
+       <entry width-request="40" max-length="4" width="4" space-expand="false" space-fill="false">
+        <default>'$TPOS'</default>
+        <variable>TOP_POS</variable>
+        <visible>disabled</visible>
+       </entry>
+       <text width-request="1"><label>.</label></text>
+      </hbox>
+    <hbox homogeneous="true">
+     <button><label>'$SAVE'</label></button>
+     <button><label>'$QUIT'</label></button>
+    </hbox>
+  </vbox>
+'$FAV'
+'$PROGS'
+ </notebook>
+</vbox>'
+
+export GTK2_RC_FILES=$BASE_DIR/Theme/gtk-2.0/"$GTKRCFILE"
+eval `gtkdialog --program=gsm_v2 --gtk-module=gtk2desklet $WINDOW_POSITION`
+if [ "$EXIT" == "$SAVE" ];then
+ [ "$TABO" == "$LEFT" ]&& TABO="0" && echo "$LEFT" > $SD/tab_position2
+ [ "$TABO" == "$RIGHT" ]&& TABO="1" && echo "$RIGHT" > $SD/tab_position2
+ [ "$TABO" == "$TOP" ]&& TABO="2" && echo "$TOP" > $SD/tab_position2
+ [ "$TABO" == "$BOTTOM" ]&& TABO="3" && echo "$BOTTOM" > $SD/tab_position2
+ [ "$TABO" != "$TAB_POSITION" ]&& echo "$TABO" > $SD/tab_position
+ [ "$ICON" != "$ICON_SIZE" ]&& echo "$ICON" > $SD/icon_size && touch $SD/update
+ if [ "$FONT" == "$FCB" ];then
+  echo "gtkrc" > $SD/gtk_fc
+  echo "$FCB" > $SD/font_color
+ else
+  echo "gtkrc-wf" > $SD/gtk_fc
+  echo "$FCW" > $SD/font_color
+ fi
+ if [ "$CENTER" == "true" ];then
+  echo "CENTER|0|0|0" > $SD/win_pos
+ elif [ "$FULLSCREEN" == "true" ];then
+  LPOS=$(xprop -root |grep 'WORKAREA(' | cut -f2 -d'=' | cut -f1 -d',' | sed 's/ //')
+  TPOS=$(xprop -root |grep 'WORKAREA(' | cut -f2 -d'=' | cut -f2 -d',' | sed 's/ //')
+  W=$(xprop -root |grep 'WORKAREA(' | cut -f2 -d'=' | cut -f3 -d',' | sed 's/ //')
+  H=$(xprop -root |grep 'WORKAREA(' | cut -f2 -d'=' | cut -f4 -d',' | sed 's/ //')
+  echo "FULLSCREEN|$LPOS|$TPOS|${W}x$H" > $SD/win_pos
+ elif [ "$CUSTOM" == "true" ];then
+  echo "CUSTOM|$LEFT_POS|$TOP_POS" > $SD/win_pos
+ fi
+ if [ "$AUTO" == "true" -a -z "$AA" ];then
+  echo "#!/bin/sh
+sleep 4 && $0 &" > /root/Startup/$(basename $0)
+ chmod 777 /root/Startup/$(basename $0)
+ else
+  [ -e /root/Startup/$(basename $0) ]&& rm /root/Startup/$(basename $0)  
+ fi
+ "$0" && exit
+elif [ "$EXIT" == "$QUIT" ];then
+ exit
+fi

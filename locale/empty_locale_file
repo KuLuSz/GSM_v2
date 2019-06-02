@@ -1,0 +1,25 @@
+#elements to be translated:
+STRING OF MENU = "Translated text"		# Translation comment of localisation
+
+YAF_SPLASH="" 				# GSM_v2 Menu update, please wait...
+QUIT=""						# Close menu
+SAVE=""						# Save
+LEFT=""						# Left
+RIGHT=""					# Right
+TOP=""						# Top
+BOTTOM=""					# Bottom
+TAB_ORIENT=""				# Placement of tabs
+ISIZE=""					# Icon size
+BG=""						# Backgrounds
+FC=""						# Font color
+FCB=""						# Black
+FCW=""						# White
+FAVORITE=""					# Favorites
+MENU_POS=""					# Menu position
+CENTER=""					# Center
+FSCREEN=""					# Full screen
+CUSTOM=""					# Custom
+FROM_LEFT=""				# From left
+FROM_TOP=""					# From top
+AUTO_START=""				# Auto start
+EXTRA=""					#EXTRA:  You can make favorite tab in the menu, just drop some .desktop file to favorite folder in gsm_v2 base dir.
